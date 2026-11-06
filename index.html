@@ -184,6 +184,8 @@ const CONFIG = {
   year: 2026,
   // Cada cuántos segundos se revisa si el Excel cambió.
   refreshSeconds: 60,
+  // Tipos (columna "Tipo") que NO se muestran en la agenda. Para volver a mostrarlos, deja la lista vacía: []
+  hiddenTypes: ["OPCIÓN DE GRADO"],
 };
 /* ============================================================= */
 
@@ -314,6 +316,7 @@ function parseWorkbook(wb){
       }
       const id = `${ev.dkey}|${mins}|${keyOf(ev.title)}`;
       if(seen.has(id)) continue;   // fila repetida (misma fecha, hora y evento)
+      if((ev.fields["Tipo"]||[]).some(t => CONFIG.hiddenTypes.some(h => keyOf(h) === keyOf(t)))) continue;   // tipo oculto
       seen.add(id);
       events.push(ev);
     }
@@ -374,6 +377,7 @@ function renderFields(){
     }
     const cur = state.f[col];
     if(cur && !counts.has(cur)) counts.set(cur,0);
+    if(!counts.size && !events.some(e => e.fields[col])) return "";   // columna sin datos visibles
     let opts = [...counts.entries()];
     if(col==="Hora") opts.sort((a,b)=>a[0]-b[0]);
     else opts.sort((a,b)=>display(col,a[0]).localeCompare(display(col,b[0]),"es"));
